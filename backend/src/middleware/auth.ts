@@ -1,20 +1,43 @@
-import { Request, Response, NextFunction } from "express";
+import { Request, Response, NextFunction, RequestHandler } from "express";
 import jwt from "jsonwebtoken";
-import dotenv from "dotenv";
-
-dotenv.config({ path: ".env.dev" });
 
 interface JwtPayload {
   id: string;
 }
 
-const authenticateToken = (req: Request, res: Response, next: NextFunction) => {
-  const token = req.headers["authorization"];
-  if (!token) return res.status(401).json({ message: "No token provided" });
+declare global {
+  namespace Express {
+    interface Request {
+      user?: JwtPayload;
+    }
+  }
+}
 
-  jwt.verify(token.split(" ")[1], process.env.JWT_SECRET!, (err, decoded) => {
-    if (err) return res.status(403).json({ message: "Token is invalid" });
-    req.user = decoded as JwtPayload;
+const isUserPayload = (decoded: unknown): decoded is JwtPayload =>
+  typeof decoded === "object" &&
+  decoded !== null &&
+  "id" in decoded &&
+  typeof decoded.id === "string";
+
+const authenticateToken: RequestHandler = (req: Request, res: Response, next: NextFunction) => {
+  const header = req.headers.authorization;
+  const [scheme, token] = header?.split(" ") ?? [];
+  if (scheme !== "Bearer" || !token) {
+    res.status(401).json({ message: "No token provided" });
+    return;
+  }
+
+  jwt.verify(token, process.env.JWT_SECRET!, { algorithms: ["HS256"] }, (err, decoded) => {
+    if (err) {
+      const message = err instanceof jwt.TokenExpiredError ? "Token expired" : "Token is invalid";
+      res.status(401).json({ message });
+      return;
+    }
+    if (!isUserPayload(decoded)) {
+      res.status(401).json({ message: "Token is invalid" });
+      return;
+    }
+    req.user = { id: decoded.id };
     next();
   });
 };

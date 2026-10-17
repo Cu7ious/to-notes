@@ -7,22 +7,22 @@ services:
     volumes:
       - mongo_data:/data/db
 
-  node:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    container_name: tonotes-node
-    volumes:
-      - ./backend:/usr/src/app/
-      - /usr/src/app/node_modules
-    ports:
-      - "3000:3000"
-      - "9229:9229"
-    depends_on:
-      - mongo
-    environment:
-      MONGO_URL: mongodb://tonotes-db:27017/tonotes
-      PORT: 3000
+  # node:
+  #   build:
+  #     context: ./backend
+  #     dockerfile: Dockerfile
+  #   container_name: tonotes-node
+  #   volumes:
+  #     - ./backend:/usr/src/app/
+  #     - /usr/src/app/node_modules
+  #   ports:
+  #     - "3000:3000"
+  #     - "9229:9229"
+  #   depends_on:
+  #     - mongo
+  #   environment:
+  #     MONGO_URL: mongodb://tonotes-db:27017/tonotes
+  #     PORT: 3000
 
 volumes:
   mongo_data:
