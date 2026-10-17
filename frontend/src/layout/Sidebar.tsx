@@ -8,29 +8,25 @@ import { useAuth } from "../context/AuthContext";
 
 export default function Sidebar() {
   const { isAuthenticated } = useAuth();
+  const { notes, isLoading, isError } = useContext(NotesContext);
 
   if (!isAuthenticated) {
     return <Aside />;
   }
 
-  const { notes, isLoading, isError } = useContext(NotesContext);
   return (
     <Aside>
-      {isAuthenticated && (
-        <>
-          <h1>Your Notes</h1>
-          {isLoading && <h6>Loading...</h6>}
-          {isError && <h6>Error loading notes</h6>}
-          {notes && (
-            <ul>
-              {notes.map((note: NoteType) => (
-                <li key={note._id}>
-                  <NavLink to={`/notes/${note._id}`}>{note.title}</NavLink>
-                </li>
-              ))}
-            </ul>
-          )}
-        </>
+      <h1>Your Notes</h1>
+      {isLoading && <h6>Loading...</h6>}
+      {isError && <h6>Error loading notes</h6>}
+      {notes && (
+        <ul>
+          {notes.map((note: NoteType) => (
+            <li key={note._id}>
+              <NavLink to={`/notes/${note._id}`}>{note.title}</NavLink>
+            </li>
+          ))}
+        </ul>
       )}
     </Aside>
   );

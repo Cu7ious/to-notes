@@ -69,8 +69,13 @@ export async function deleteNote(id: z.infer<typeof NoteSchema>["_id"]) {
   return response.data;
 }
 
-export function useNotes() {
-  const { data, error, isLoading } = useSWR(API_URL, fetchNotes);
+const skipUnauthorizedRetry = (error: unknown) =>
+  !(axios.isAxiosError(error) && error.response?.status === 401);
+
+export function useNotes(enabled = true) {
+  const { data, error, isLoading } = useSWR(enabled ? API_URL : null, fetchNotes, {
+    shouldRetryOnError: skipUnauthorizedRetry,
+  });
   return {
     notes: data,
     isLoading,
@@ -79,7 +84,9 @@ export function useNotes() {
 }
 
 export function useNote(_id: z.infer<typeof NoteSchema>["_id"]) {
-  const { data, error, isLoading } = useSWR(`${API_URL}/${_id}`, () => fetchNoteById(_id));
+  const { data, error, isLoading } = useSWR(`${API_URL}/${_id}`, () => fetchNoteById(_id), {
+    shouldRetryOnError: skipUnauthorizedRetry,
+  });
   return {
     note: data,
     isLoading,

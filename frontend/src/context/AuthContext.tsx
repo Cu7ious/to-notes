@@ -13,10 +13,25 @@ let logoutTimer: ReturnType<typeof setTimeout>;
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const currentToken = () => {
+  const token = getJWT();
+  if (!token) return null;
+  try {
+    const { exp } = jwtDecode<{ exp?: number }>(token);
+    if (!exp || exp * 1000 <= Date.now()) {
+      removeJWT();
+      return null;
+    }
+    return token;
+  } catch {
+    removeJWT();
+    return null;
+  }
+};
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const localToken = getJWT();
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(!!localToken);
-  const [token, setToken] = useState<string | null>(localToken);
+  const [token, setToken] = useState<string | null>(currentToken);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(!!token);
 
   const startLogoutTimer = (token: string) => {
     const { exp } = jwtDecode<{ exp: number }>(token);
